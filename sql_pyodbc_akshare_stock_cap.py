@@ -6,17 +6,13 @@ import time
 from tenacity import retry, stop_after_attempt, wait_fixed
 from json import JSONDecodeError
 
-# ====================== 配置区 ======================
-conn_str   = 'DSN,UID,PWD'  # ODBC DSN
-table_name = "stock_a_share_cap"             # 目标表名
 
-# ====================== 重试函数定义 ======================
+conn_str   = 'DSN,UID,PWD'
+table_name = "stock_a_share_cap"           
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
 def fetch_share_cap(code: str) -> pd.DataFrame:
-    """
-    调用 ak.stock_value_em 抓取单只股票的市值和股本数据，
-    传入的 code 必须是不带 sz/sh 前缀的数字字符串
-    """
     return ak.stock_value_em(symbol=code)
 
 def main():
@@ -178,4 +174,5 @@ ALTER COLUMN {col} DECIMAL(38,0) NULL;
 
 if __name__ == "__main__":
     main()
+
 
