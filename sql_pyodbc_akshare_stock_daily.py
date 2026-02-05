@@ -6,26 +6,22 @@ import time
 from tenacity import retry, stop_after_attempt, wait_fixed
 from json import JSONDecodeError
 
-# ====================== 配置区 ======================
+
 conn_str   = 'DSN,UID,PWD'  
 table_name = "stock_a_daily"                  
 start_date = "2010-01-01"                     
 
-# ====================== 重试函数定义 ======================
-# 遇到网络抖动或连接重置时，最多重试 3 次，每次间隔 1 秒
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
 def fetch_daily(symbol: str) -> pd.DataFrame:
     return ak.stock_zh_a_daily(symbol=symbol, start_date=start_date)
 
 def main():
     try:
-        # 1. 连接数据库
         with pyodbc.connect(conn_str) as conn:
             cursor = conn.cursor()
             cursor.fast_executemany = True
             print("✔️ 数据库连接成功")
 
-            # 2. 建表（若不存在），去掉 outstanding_share，只保留 turnover
             ddl = f"""
 IF OBJECT_ID(N'dbo.{table_name}', 'U') IS NULL
 BEGIN
@@ -47,8 +43,7 @@ END
             cursor.execute(ddl)
             conn.commit()
             print(f"✔️ 表 [{table_name}] 创建/检查成功")
-
-            # 3. 获取 A 股列表（沪深交易所）并加前缀
+            
             try:
                 stock_df = ak.stock_info_a_code_name()
             except JSONDecodeError:
@@ -68,7 +63,6 @@ END
 
             print(f"✔️ 共获取 {len(symbols)} 只沪深交易所 A 股代码")
 
-            # 4. 循环抓取并入库
             failed = []
             for symbol in symbols:
                 try:
@@ -77,20 +71,17 @@ END
                         print(f"⚠️ {symbol} 无数据，跳过")
                         continue
 
-                    # —— 清洗 & 转换 —— 
-                    df.reset_index(inplace=True)                       # 把索引 'date' 转为列
+                    df.reset_index(inplace=True)                       
                     df.rename(columns={'date':'trade_date'}, inplace=True)
                     df['symbol']      = symbol
                     df['update_time'] = datetime.now()
                     df['trade_date']  = pd.to_datetime(df['trade_date']).dt.date
 
-                    # 只保留我们需要的列（去掉 outstanding_share）
                     df = df[[
                         'symbol','trade_date','open','high','low','close',
                         'volume','amount','turnover','update_time'
                     ]]
 
-                    # —— 批量插入 —— 
                     records = [tuple(row) for row in df.values]
                     insert_sql = f"""
 INSERT INTO dbo.{table_name}
@@ -101,7 +92,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     cursor.executemany(insert_sql, records)
                     conn.commit()
                     print(f"✅ {symbol} 插入 {len(df)} 条")
-                    time.sleep(0.1)  # 避免过快触发限流
+                    time.sleep(0.1)  
 
                 except Exception as e:
                     print(f"❌ {symbol} 处理失败: {e}")
@@ -119,4 +110,5 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
 if __name__ == "__main__":
     main()
+
 
