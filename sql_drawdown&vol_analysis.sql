@@ -1,7 +1,4 @@
--- Assignment 6 Jinjia Peng SQL FIM 590 Fall
-
-
--- Using the tables we created in class:
+-- Using the tables
 
 -- what was the largest daily portfolio move on a percentage basis?  
 select p.CloseDate
@@ -315,6 +312,7 @@ select *
 from trade_pnl
 order by trade_pnl asc
 limit 1;
+
 
 
 
