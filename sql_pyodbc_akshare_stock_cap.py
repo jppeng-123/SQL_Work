@@ -7,7 +7,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from json import JSONDecodeError
 
 # ====================== 配置区 ======================
-conn_str   = 'DSN=Trading;UID=sa;PWD=123456'  # ODBC DSN
+conn_str   = 'DSN,UID,PWD'  # ODBC DSN
 table_name = "stock_a_share_cap"             # 目标表名
 
 # ====================== 重试函数定义 ======================
@@ -178,3 +178,4 @@ ALTER COLUMN {col} DECIMAL(38,0) NULL;
 
 if __name__ == "__main__":
     main()
+
