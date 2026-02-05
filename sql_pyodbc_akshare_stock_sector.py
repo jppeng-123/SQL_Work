@@ -2,7 +2,7 @@ import pandas as pd
 import pyodbc
 from datetime import datetime
 
-CONN = pyodbc.connect("DSN=Trading;UID=sa;PWD=123456")
+CONN = pyodbc.connect("DSN,UID,PWD")
 
 def load_stock_sector_table(conn: pyodbc.Connection) -> pd.DataFrame:
     sql = """
@@ -104,3 +104,4 @@ level3_col="三级行业名称"
 sector_df, industry_df = build_sector_and_industry_dfs(industry_code_df, mapping_df)
 print(sector_df)
 print(industry_df)
+
